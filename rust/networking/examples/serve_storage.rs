@@ -1,10 +1,11 @@
 use networking;
+use tracing::info;
 use zenoh::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     zenoh::init_log_from_env_or("info");
-    log::info!("Opening session...");
+    info!("Opening session...");
     let cfg = networking::cfg(rand::random())?;
     let session = networking::open(cfg).await?;
     let _tok = session

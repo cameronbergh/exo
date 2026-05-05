@@ -10,7 +10,7 @@ use tokio::{
     sync::mpsc,
     task::{AbortHandle, JoinHandle, JoinSet},
 };
-pub use zenoh::{Config, config::ZenohId};
+use tracing::{error, info};
 use zenoh::{
     Result, Session as ZSession,
     config::{Locator, WhatAmI},
@@ -19,6 +19,9 @@ use zenoh::{
 use zenoh_plugin_storage_manager::StoragesPlugin;
 use zenoh_plugin_trait::PluginsManager;
 
+pub use zenoh::{Config, config::ZenohId};
+
+pub mod discovery;
 pub mod swarm;
 
 pub struct Session {
@@ -89,7 +92,7 @@ pub async fn open(cfg: zenoh::Config) -> Result<Session> {
 pub async fn watch_iface(runtime: Runtime, index: u32, name: String) -> Result<()> {
     let mut cfg = zenoh::Config::default();
     cfg.insert_json5("scouting/multicast/interface", &format!("\"{name}\""))?;
-    log::info!("starting scout on iface={name}");
+    info!("starting scout on iface={name}");
     let scout = zenoh::scout(WhatAmI::Peer, cfg).await?;
     while let Ok(hello) = scout.recv_async().await {
         if hello.zid() == runtime.zid() {
@@ -180,11 +183,11 @@ fn watch_all(runtime: Runtime) -> Result<WatchAllHandle> {
             while let Some(r) = js.try_join_next() {
                 match r {
                     Ok(Err(e)) => {
-                        log::error!("iface watcher failed with {e}");
+                        error!("iface watcher failed with {e}");
                         return Err(e);
                     }
                     Err(e) if e.is_panic() => {
-                        log::error!("iface watcher panicked with {e}");
+                        error!("iface watcher panicked with {e}");
                         return Err(e.into());
                     }
                     _ => {}

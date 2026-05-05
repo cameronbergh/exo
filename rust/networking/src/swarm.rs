@@ -6,6 +6,7 @@ use std::pin::Pin;
 use futures_lite::Stream;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
+use tracing::info;
 use zenoh::Result;
 use zenoh::Session;
 use zenoh::handlers::FifoChannelHandler;
@@ -72,11 +73,11 @@ impl Swarm {
                             let nid = key_expr.strip_prefix("nodes/").and_then(|s| s.strip_suffix("/live"));
                             yield match token.kind() {
                                 SampleKind::Put => {
-                                    log::info!("discovered: {nid:?}");
+                                    info!("discovered: {nid:?}");
                                     FromSwarm::Discovered {}
                                 }
                                 SampleKind::Delete => {
-                                    log::info!("expired: {nid:?}");
+                                    info!("expired: {nid:?}");
                                     FromSwarm::Expired {}
                                 }
                             }
